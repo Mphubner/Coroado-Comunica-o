@@ -1,0 +1,269 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role-based access control and approval status",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "phone": { "type": "string" },
+        "celula": { "type": "string" },
+        "areaInteresse": { "type": "string" },
+        "role": { "type": "string", "enum": ["servo", "lider", "admin"] },
+        "status": { "type": "string", "enum": ["pendente", "ativo", "pausado", "bloqueado", "concluido"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "lastLoginAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role", "status"]
+    },
+    "Module": {
+      "title": "Module",
+      "description": "Thematic module in the communication trail",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "order": { "type": "integer" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "order"]
+    },
+    "Lesson": {
+      "title": "Lesson",
+      "description": "Lesson belonging to a module in the communication trail",
+      "type": "object",
+      "properties": {
+        "moduleId": { "type": "string" },
+        "title": { "type": "string" },
+        "order": { "type": "integer" },
+        "objective": { "type": "string" },
+        "bibleReferences": { "type": "string" },
+        "openingQuestion": { "type": "string" },
+        "summary": { "type": "string" },
+        "youtubeUrl": { "type": "string" },
+        "youtubeVideoId": { "type": "string" },
+        "driveDocUrl": { "type": "string" },
+        "driveSlideUrl": { "type": "string" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["moduleId", "title", "order"]
+    },
+    "Devotional": {
+      "title": "Devotional",
+      "description": "Devotional linked to a lesson",
+      "type": "object",
+      "properties": {
+        "lessonId": { "type": "string" },
+        "title": { "type": "string" },
+        "bibleReference": { "type": "string" },
+        "readingInstruction": { "type": "string" },
+        "guidedMeditation": { "type": "string" },
+        "suggestedPrayer": { "type": "string" },
+        "weeklyPractice": { "type": "string" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["lessonId", "title"]
+    },
+    "DevotionalAnswer": {
+      "title": "DevotionalAnswer",
+      "description": "User's responses to devotional questions",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "devotionalId": { "type": "string" },
+        "lessonId": { "type": "string" },
+        "moduleId": { "type": "string" },
+        "answers": { "type": "object" },
+        "wantsLeaderConversation": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["nova", "lida", "acompanhada"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "reviewedBy": { "type": "string" },
+        "reviewedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "userEmail", "devotionalId", "lessonId", "moduleId", "answers", "status"]
+    },
+    "LessonProgress": {
+      "title": "LessonProgress",
+      "description": "Tracking of a user's progress through a lesson",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "lessonId": { "type": "string" },
+        "moduleId": { "type": "string" },
+        "status": { "type": "string", "enum": ["nao_iniciada", "em_andamento", "concluida"] },
+        "percent": { "type": "integer" },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "lessonId", "moduleId", "status"]
+    },
+    "DevotionalProgress": {
+      "title": "DevotionalProgress",
+      "description": "Tracking of a user's progress through a devotional",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "devotionalId": { "type": "string" },
+        "lessonId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pendente", "respondido", "concluido"] },
+        "answeredAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "devotionalId", "lessonId", "status"]
+    },
+    "SupportMaterial": {
+      "title": "SupportMaterial",
+      "description": "Additional class materials like pregações, documentações, pdfs",
+      "type": "object",
+      "properties": {
+        "lessonId": { "type": "string" },
+        "moduleId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["youtube", "podcast", "article", "pdf", "drive", "presentation", "other"] },
+        "url": { "type": "string" },
+        "youtubeVideoId": { "type": "string" },
+        "required": { "type": "boolean" },
+        "visibility": { "type": "string", "enum": ["servos", "lideres", "admins"] },
+        "order": { "type": "integer" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "type", "url"]
+    },
+    "WeeklyMeeting": {
+      "title": "WeeklyMeeting",
+      "description": "Weekly online meeting through Meet or YouTube Live",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "relatedLessonId": { "type": "string" },
+        "relatedModuleId": { "type": "string" },
+        "startAt": { "type": "string", "format": "date-time" },
+        "endAt": { "type": "string", "format": "date-time" },
+        "type": { "type": "string", "enum": ["youtube_live", "google_meet", "both", "in_person"] },
+        "googleMeetUrl": { "type": "string" },
+        "youtubeLiveUrl": { "type": "string" },
+        "youtubeVideoId": { "type": "string" },
+        "recordingUrl": { "type": "string" },
+        "calendarEventId": { "type": "string" },
+        "status": { "type": "string", "enum": ["agendada", "ao_vivo", "encerrada", "cancelada"] },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "startAt", "type", "status"]
+    },
+    "MeetingAttendance": {
+      "title": "MeetingAttendance",
+      "description": "Verification of attendance in weekly meetings",
+      "type": "object",
+      "properties": {
+        "meetingId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "status": { "type": "string", "enum": ["confirmado", "presente", "ausente"] },
+        "confirmedAt": { "type": "string", "format": "date-time" },
+        "markedBy": { "type": "string" },
+        "markedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["meetingId", "userId", "userEmail", "status"]
+    },
+    "LeaderNote": {
+      "title": "LeaderNote",
+      "description": "Private pastoral observations for leaders and admins regarding a servo",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "leaderId": { "type": "string" },
+        "lessonId": { "type": "string" },
+        "devotionalAnswerId": { "type": "string" },
+        "note": { "type": "string" },
+        "visibility": { "type": "string", "enum": ["lideres_admins"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "leaderId", "note", "visibility"]
+    },
+    "PlatformSettings": {
+      "title": "PlatformSettings",
+      "description": "Visual customization and main settings for Coroado Comunicação",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "mainPhrase": { "type": "string" },
+        "supportPhrase": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "primaryColor": { "type": "string" },
+        "secondaryColor": { "type": "string" },
+        "contactEmail": { "type": "string" }
+      },
+      "required": ["name", "mainPhrase", "supportPhrase"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User accounts with roles"
+    },
+    "/modules/{moduleId}": {
+      "schema": "Module",
+      "description": "Curriculum topics"
+    },
+    "/lessons/{lessonId}": {
+      "schema": "Lesson",
+      "description": "Individual classes and summaries"
+    },
+    "/devotionals/{devotionalId}": {
+      "schema": "Devotional",
+      "description": "Meditation guides for each lesson"
+    },
+    "/devotionalAnswers/{answerId}": {
+      "schema": "DevotionalAnswer",
+      "description": "Students reflections and status"
+    },
+    "/lessonProgress/{progressId}": {
+      "schema": "LessonProgress",
+      "description": "Tracks which lessons a user finished"
+    },
+    "/devotionalProgress/{progressId}": {
+      "schema": "DevotionalProgress",
+      "description": "Tracks which devotionals a user finished"
+    },
+    "/supportMaterials/{materialId}": {
+      "schema": "SupportMaterial",
+      "description": "Links and reference documents"
+    },
+    "/weeklyMeetings/{meetingId}": {
+      "schema": "WeeklyMeeting",
+      "description": "Events for weekly live interactive lessons"
+    },
+    "/meetingAttendance/{attendanceId}": {
+      "schema": "MeetingAttendance",
+      "description": "User RSVP lists for weekly interactive lessons"
+    },
+    "/leaderNotes/{noteId}": {
+      "schema": "LeaderNote",
+      "description": "Confidential counseling remarks written by shepherds"
+    },
+    "/platformSettings/{settingsId}": {
+      "schema": "PlatformSettings",
+      "description": "Global custom tags and layouts"
+    }
+  }
+}

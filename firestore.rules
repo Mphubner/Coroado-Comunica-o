@@ -1,0 +1,200 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Catch-All Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- GLOBAL REUSABLE FUNCTIONS ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn() && request.auth.token.email == "marcospereirahubner@gmail.com";
+    }
+
+    // Helper to fetch the live user record
+    function getUserRecord(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    function isActiveUser() {
+      return isSignedIn() && (
+        isBootstrappedAdmin() || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         getUserRecord(request.auth.uid).status == "ativo")
+      );
+    }
+
+    function isLiderOrAdmin() {
+      return isSignedIn() && (
+        isBootstrappedAdmin() || (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          getUserRecord(request.auth.uid).role in ["lider", "admin"] &&
+          getUserRecord(request.auth.uid).status == "ativo"
+        )
+      );
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        isBootstrappedAdmin() || (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          getUserRecord(request.auth.uid).role == "admin" &&
+          getUserRecord(request.auth.uid).status == "ativo"
+        )
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- COLLECTION MATCHES ---
+
+    // USERS COLLECTION
+    match /users/{userId} {
+      allow read: if isSignedIn() && (isOwner(userId) || isLiderOrAdmin());
+      
+      allow create: if isSignedIn() && request.auth.uid == userId && (
+        // Bootstrapped admin can register directly as admin/ativo
+        (isBootstrappedAdmin() && request.resource.data.role == "admin" && request.resource.data.status == "ativo") ||
+        // Normal users must enter as servo/pendente
+        (!isBootstrappedAdmin() && request.resource.data.role == "servo" && request.resource.data.status == "pendente")
+      );
+
+      allow update: if isSignedIn() && (
+        // Leader or admin can modify fields
+        isLiderOrAdmin() ||
+        // Owner can modify their own non-RBAC fields
+        (isOwner(userId) && 
+         request.resource.data.role == resource.data.role && 
+         request.resource.data.status == resource.data.status)
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // MODULES (THEMES)
+    match /modules/{moduleId} {
+      allow read: if isActiveUser() || isLiderOrAdmin();
+      allow write: if isAdmin();
+    }
+
+    // LESSONS
+    match /lessons/{lessonId} {
+      allow read: if isActiveUser() || isLiderOrAdmin();
+      allow write: if isAdmin();
+    }
+
+    // DEVOTIONALS
+    match /devotionals/{devotionalId} {
+      allow read: if isActiveUser() || isLiderOrAdmin();
+      allow write: if isAdmin();
+    }
+
+    // DEVOTIONAL ANSWERS
+    match /devotionalAnswers/{answerId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        isLiderOrAdmin()
+      );
+      
+      allow create: if isActiveUser() && 
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == "nova" &&
+        (request.resource.data.createdAt is string || request.resource.data.createdAt == request.time);
+
+      allow update: if isSignedIn() && (
+        // Servos can update their own answers if status is still new ("nova")
+        (isOwner(resource.data.userId) && 
+         resource.data.status == "nova" && 
+         request.resource.data.userId == resource.data.userId &&
+         request.resource.data.status == "nova" &&
+         request.resource.data.createdAt == resource.data.createdAt) ||
+        // Leaders can update status field (mark as read or accompanied)
+        isLiderOrAdmin()
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // LESSON PROGRESS
+    match /lessonProgress/{progressId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        isLiderOrAdmin()
+      );
+      allow create, update: if isActiveUser() && 
+        request.resource.data.userId == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // DEVOTIONAL PROGRESS
+    match /devotionalProgress/{progressId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        isLiderOrAdmin()
+      );
+      allow create, update: if isActiveUser() && 
+        request.resource.data.userId == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // SUPPORT MATERIALS
+    match /supportMaterials/{materialId} {
+      allow read: if isActiveUser() && (
+        resource.data.visibility == "servos" || 
+        isLiderOrAdmin()
+      );
+      allow write: if isAdmin();
+    }
+
+    // WEEKLY MEETINGS
+    match /weeklyMeetings/{meetingId} {
+      allow read: if isActiveUser() || isLiderOrAdmin();
+      allow write: if isLiderOrAdmin();
+    }
+
+    // MEETING ATTENDANCE
+    match /meetingAttendance/{attendanceId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        isLiderOrAdmin()
+      );
+      allow create, update: if isActiveUser() && 
+        request.resource.data.userId == request.auth.uid;
+      allow delete: if isLiderOrAdmin();
+    }
+
+    // LEADER SHEPHERDING PRIVATE NOTES
+    match /leaderNotes/{noteId} {
+      allow read, write: if isLiderOrAdmin();
+    }
+
+    // PLATFORM SETTINGS
+    match /platformSettings/{settingsId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // LESSON ANSWERS (OPENING & FINAL QUESTIONS)
+    match /lessonAnswers/{answerId} {
+      allow read: if isSignedIn() && (
+        resource == null ||
+        resource.data.userId == request.auth.uid || 
+        isLiderOrAdmin()
+      );
+      allow create, update: if isActiveUser() && 
+        request.resource.data.userId == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+  }
+}

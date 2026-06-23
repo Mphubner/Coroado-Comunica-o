@@ -1,0 +1,6 @@
+{
+  "name": "CRD Comm",
+  "description": "Trilha de alinhamento com os servos que estão ingressando no ministérios de comunicação.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
